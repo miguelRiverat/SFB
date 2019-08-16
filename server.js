@@ -4,7 +4,7 @@ const bodyParser= require('body-parser')
 var timeout = require('connect-timeout');
 const multer = require('multer');
 const app = express()
-const fs = require('fs');
+//const fs = require('fs');
 //const middleware = require('./middleware/middlewares')
 const middleware = require('./middleware/middle')
 
@@ -28,7 +28,7 @@ let storage = multer.diskStorage({
       cb(null, 'uploads')
   },
   filename: function (req, file, cb) {
-      cb(null, `${Date.now()}-${file.originalname}`)
+      cb(null, `__name__${file.originalname}`)
   }
 })
 let upload = multer({ storage: storage })

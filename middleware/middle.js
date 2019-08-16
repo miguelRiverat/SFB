@@ -6,6 +6,7 @@ var jsonToCsv = require('convert-json-to-csv')
 const csv = require('csvtojson')
 const projectId = 'prime-principle-243417';
 const bucketName = 'incoming-files';
+
 const gstorage = new Storage({
   projectId: projectId,
 });
@@ -18,6 +19,66 @@ const validDate = str => {
 }
 
 let parseFIle = (req, res, next) => {
+  if (!req.body.date) {
+    return res.status(400).jsonp({message: 'error en fecha'})
+  }
+  let date = new Date(req.body.date)
+  let year = date.getFullYear().toString()
+  let month = date.getMonth()
+  const file = req.file
+  let origin = file.path
+  let name = `${file.path.replace("__name__", req.body.date.split("T")[0]+"__")}`
+  let target = `${name}.csv`
+  const csvFilePath = origin
+  req.inject.target = target
+  /*csv()
+  .fromFile(csvFilePath)
+  .then((jsonObj) => {
+    let array = ["Clase Terapeutica Nivel3","Clase Terapeutica Nivel4","Corporacion","Fecha Lanzamiento Presentacion","Fecha Lanzamiento Producto","Forma Farmaceutica1","Forma Farmaceutica2","Forma Farmaceutica3","Genero","Laboratorio","Molecula N1","Presentacion","Producto","Punto de Venta"]
+    let months = ["Ene","Feb","Mar", "Abr", "May", "Jun", "Jul", "Ago","Sep","Oct","Nov","Dic"]
+
+    let newArray = jsonObj.reduce((acums, ele, index) => {
+      let jsonProducts = array.reduce((retur, head) => {
+        retur[head] = ele[head]
+
+        if (ele[head].includes('MTH')) {
+          Objectele[head]
+        }
+
+
+
+        return retur 
+      },{})
+
+
+
+      //jsonProducts['Fecha Lanzamiento Presentacion'] = validDate(jsonProducts['Fecha Lanzamiento Presentacion'])
+      //jsonProducts["Fecha Lanzamiento Producto"] = validDate(jsonProducts['Fecha Lanzamiento Producto'])
+      jsonProducts[`MTH Uni ${months[month]}. ${year.replace('20', '')}`] = ele[`MTH Uni ${months[month]}`][` ${year.replace('20', '')}`]
+      jsonProducts[`MTH Pesos ${months[month]}. ${year.replace('20', '')}`] = ele[`MTH Pesos ${months[month]}`][` ${year.replace('20', '')}`]
+
+      acums = acums.concat(jsonProducts)
+      return acums
+    },[])
+    let columnDef = ["Clase Terapeutica Nivel3","Clase Terapeutica Nivel4","Corporacion","Fecha Lanzamiento Presentacion","Fecha Lanzamiento Producto","Forma Farmaceutica1","Forma Farmaceutica2","Forma Farmaceutica3","Genero","Laboratorio","Molecula N1","Presentacion","Producto","Punto de Venta"].concat([`MTH Uni ${months[month]} ${year.replace('20', '')}`, `MTH Pesos ${months[month]} ${year.replace('20', '')}`])
+    newArray.shift()
+
+    var arrayOfObjectsCsv = jsonToCsv.convertArrayOfObjects(newArray, columnDef);
+    
+    fs.writeFile(target, arrayOfObjectsCsv, (err) => {
+      if(err) { return console.log(err) }
+    })
+    next()
+  })*/
+
+  fs.readFileSync(origin).toString().split('\n').forEach(function (line) { 
+    line = line.replace(/,/g,";")
+    fs.appendFileSync(target, line.toString() + "\n");
+  })
+  next()
+}
+/*
+let parseFIle_ = (req, res, next) => {
   const file = req.file
   let origin = file.path
   let target = `${file.path}.csv`
@@ -28,7 +89,7 @@ let parseFIle = (req, res, next) => {
   .then((jsonObj) => {
     let array = ["Clase Terapeutica Nivel3","Clase Terapeutica Nivel4","Corporacion","Fecha Lanzamiento Presentacion","Fecha Lanzamiento Producto","Forma Farmaceutica1","Forma Farmaceutica2","Forma Farmaceutica3","Genero","Laboratorio","Molecula N1","Presentacion","Producto","Punto de Venta"]
     let months = ["Ene","Feb","Mar", "Abr", "May", "Jun", "Jul", "Ago","Sep","Oct","Nov","Dic"]
-    let years = ["19", "18", "17", "16", "15"]
+    let years = ["19", "18", "17", "16", "15", "14", "13"]
 
     let newArray = jsonObj.reduce((acums, ele, index) => {
       let jsonProducts = array.reduce((retur, head) => {
@@ -80,13 +141,14 @@ let parseFIle = (req, res, next) => {
     let columnDef = ["Clase Terapeutica Nivel3","Clase Terapeutica Nivel4","Corporacion","Fecha Lanzamiento Presentacion","Fecha Lanzamiento Producto","Forma Farmaceutica1","Forma Farmaceutica2","Forma Farmaceutica3","Genero","Laboratorio","Molecula N1","Presentacion","Producto","Punto de Venta"].concat(["mes","unidad","pesos","operacion"])
     newArray.shift()
     var arrayOfObjectsCsv = jsonToCsv.convertArrayOfObjects(newArray, columnDef);
+    console.log(arrayOfObjectsCsv)
     fs.writeFile(target, arrayOfObjectsCsv, (err) => {
       if(err) { return console.log(err) }
     })
     next()
   })
 }
-
+*/
 let uploadGCS = (req, res) => {
   console.log('start')
   try{
@@ -97,7 +159,7 @@ let uploadGCS = (req, res) => {
       .then(() => {
         console.log(`${req.inject.target} uploaded to ${bucketName}.`);
         fs.unlinkSync(file.path);
-        //fs.unlinkSync(req.inject.target);
+        fs.unlinkSync(req.inject.target);
         res.send(file)
       })
       .catch(err => {
