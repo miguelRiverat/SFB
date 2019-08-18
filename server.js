@@ -46,11 +46,8 @@ app.post('/uploadfile',
   },
   //middleware.prepareFileNumber,
   middleware.parseFIle,
+  middleware.extraParse,
   middleware.uploadGCS
 )
-
 app.get('/flows', middleware.getJbs)
-
-
- 
 app.listen(3000, () => console.log('Server started on port 3000'));
